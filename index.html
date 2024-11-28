@@ -40,6 +40,11 @@
         }
     </style>
     <script>
+        // 숫자를 천 단위 콤마로 포맷하는 함수
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
         function calculate() {
             const competitorPrice = parseFloat(document.getElementById('competitor_price').value);
             const localPrice = parseFloat(document.getElementById('local_price').value);
@@ -50,14 +55,29 @@
             }
 
             // 예상 판매가 계산 (경쟁사 판매가보다 10% 낮게 설정)
-            const expectedPrice = competitorPrice * 0.9;
-
+            const expectedPrice = Math.floor(competitorPrice * 0.9); // 소수점 제거
             // 판매가 더하기 (환율 180 가정)
-            const profit = expectedPrice - localPrice * 180;
+            const profit = Math.floor(expectedPrice - localPrice * 180); // 소수점 제거
 
-            // 결과 출력
-            document.getElementById('expected_price').textContent = `${expectedPrice.toFixed(2)} 원`;
-            document.getElementById('profit').textContent = `${profit.toFixed(2)} 원`;
+            // 결과 출력 (천 단위 콤마 추가)
+            document.getElementById('expected_price').textContent = `${formatNumber(expectedPrice)} 원`;
+            document.getElementById('profit').textContent = `${formatNumber(profit)} 원`;
+        }
+
+        // ESC 키 이벤트 처리
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                clearInputs();
+            }
+        });
+
+        // 입력 필드 초기화 함수
+        function clearInputs() {
+            document.getElementById('competitor_price').value = ''; // 경쟁사 판매가 초기화
+            document.getElementById('local_price').value = ''; // 현지 구매가 초기화
+            document.getElementById('expected_price').textContent = '-'; // 결과 초기화
+            document.getElementById('profit').textContent = '-'; // 결과 초기화
+            document.getElementById('competitor_price').focus(); // 커서 이동
         }
     </script>
 </head>
