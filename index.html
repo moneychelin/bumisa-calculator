@@ -45,6 +45,11 @@
             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
 
+        // 500 단위 올림 함수
+        function roundUpToNearest500(num) {
+            return Math.ceil(num / 500) * 500;
+        }
+
         function calculate() {
             const competitorPrice = parseFloat(document.getElementById('competitor_price').value);
             const localPrice = parseFloat(document.getElementById('local_price').value);
@@ -55,7 +60,10 @@
             }
 
             // 예상 판매가 계산: 현지 구매가 * 192 + 현지 구매가 * 192 * 0.05
-            const expectedPrice = Math.floor(localPrice * 192 + localPrice * 192 * 0.05); // 소수점 제거
+            let expectedPrice = localPrice * 192 + localPrice * 192 * 0.05;
+
+            // 예상 판매가를 500 단위로 올림
+            expectedPrice = roundUpToNearest500(expectedPrice);
 
             // 판매가 더하기: 경쟁사 판매가 - 예상 판매가
             const profit = Math.floor(competitorPrice - expectedPrice); // 소수점 제거
