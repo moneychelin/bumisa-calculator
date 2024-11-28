@@ -54,10 +54,11 @@
                 return;
             }
 
-            // 예상 판매가 계산 (경쟁사 판매가보다 10% 낮게 설정)
-            const expectedPrice = Math.floor(competitorPrice * 0.9); // 소수점 제거
-            // 판매가 더하기 (환율 180 가정)
-            const profit = Math.floor(expectedPrice - localPrice * 180); // 소수점 제거
+            // 예상 판매가 계산: 현지 구매가 * 192 + 현지 구매가 * 192 * 0.05
+            const expectedPrice = Math.floor(localPrice * 192 + localPrice * 192 * 0.05); // 소수점 제거
+
+            // 판매가 더하기: 경쟁사 판매가 - 예상 판매가
+            const profit = Math.floor(competitorPrice - expectedPrice); // 소수점 제거
 
             // 결과 출력 (천 단위 콤마 추가)
             document.getElementById('expected_price').textContent = `${formatNumber(expectedPrice)} 원`;
