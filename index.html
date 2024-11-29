@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>구대 소싱 계산기</title>
+    <title>구대 소싱 및 중구대 마진 계산기</title>
     <style>
         body {
             font-family: 'Malgun Gothic', sans-serif;
@@ -11,21 +11,23 @@
             padding: 20px;
         }
         .container {
-            max-width: 500px;
-            margin: 0 auto;
+            max-width: 400px; /* 컨테이너 크기 제한 */
+            margin: 20px auto;
             padding: 20px;
             border: 1px solid #ddd;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        input {
-            width: 100%;
+        input, select {
+            width: 100%; /* 부모 컨테이너 너비에 맞춤 */
+            max-width: 100%; /* 입력 필드 너비가 넘지 않도록 제한 */
             padding: 10px;
             margin: 10px 0;
             font-size: 16px;
+            box-sizing: border-box; /* 패딩 포함한 너비 계산 */
         }
         button {
-            width: 100%;
+            width: 100%; /* 버튼 너비도 맞춤 */
             padding: 10px;
             background-color: #4CAF50;
             color: white;
@@ -38,19 +40,18 @@
             font-size: 20px;
             font-weight: bold;
         }
+        .result span {
+            color: red;
+        }
     </style>
     <script>
-        // 숫자를 천 단위 콤마로 포맷하는 함수
+        // 숫자 천 단위 포맷 함수
         function formatNumber(num) {
             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
 
-        // 500 단위 올림 함수
-        function roundUpToNearest500(num) {
-            return Math.ceil(num / 500) * 500;
-        }
-
-        function calculate() {
+        // 첫 번째 계산기: 구대 소싱 계산
+        function calculateSourcing() {
             const competitorPrice = parseFloat(document.getElementById('competitor_price').value);
             const localPrice = parseFloat(document.getElementById('local_price').value);
 
@@ -59,54 +60,175 @@
                 return;
             }
 
-            // 예상 판매가 계산: 현지 구매가 * 192 + 현지 구매가 * 192 * 0.05
             let expectedPrice = localPrice * 192 + localPrice * 192 * 0.05;
+            expectedPrice = Math.ceil(expectedPrice / 500) * 500;
+            const profit = Math.floor(competitorPrice - expectedPrice);
 
-            // 예상 판매가를 500 단위로 올림
-            expectedPrice = roundUpToNearest500(expectedPrice);
-
-            // 판매가 더하기: 경쟁사 판매가 - 예상 판매가
-            const profit = Math.floor(competitorPrice - expectedPrice); // 소수점 제거
-
-            // 결과 출력 (천 단위 콤마 추가)
-            document.getElementById('expected_price').textContent = `${formatNumber(expectedPrice)} 원`;
-            document.getElementById('profit').textContent = `${formatNumber(profit)} 원`;
+            document.getElementById('expected_price').textContent = formatNumber(expectedPrice) + " 원";
+            document.getElementById('profit').textContent = formatNumber(profit) + " 원";
         }
 
-        // ESC 키 이벤트 처리
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                clearInputs();
+        // 두 번째 계산기: 중구대 마진 계산
+        function calculateProfit() {
+            const exchangeRate = parseFloat(document.getElementById('exchange_rate').value);
+            const sellingPrice = parseFloat(document.getElementById('selling_price').value.replace(/,/g, ""));
+            const taobaoPrice = parseFloat(document.getElementById('taobao_price').value.replace(/,/g, ""));
+            const selectedWeight = parseFloat(document.getElementById('weight').value);
+
+            if (isNaN(sellingPrice) || isNaN(taobaoPrice) || isNaN(selectedWeight)) {
+                document.getElementById('profit_second').textContent = "-";
+                return;
+            }
+
+            const shippingCosts = {};
+            for (let i = 1; i <= 60; i++) {
+                const weight = i * 0.5;
+                shippingCosts[weight] = 4700 + (i - 1) * 350; // 예시 배송비 계산
+            }
+
+            const shippingCost = shippingCosts[selectedWeight] || 0;
+            const profit = sellingPrice - (sellingPrice * 0.05) - (taobaoPrice * exchangeRate * 1.077) - shippingCost;
+
+            const resultElement = document.getElementById('profit_second');
+            resultElement.textContent = formatNumber(profit) + " 원";
+            resultElement.style.color = profit >= 0 ? "red" : "blue";
+        }
+
+        // 필드 초기화
+        function resetFields() {
+            document.getElementById('selling_price').value = "";
+            document.getElementById('taobao_price').value = "";
+            document.getElementById('weight').value = "";
+            document.getElementById('profit_second').textContent = "-";
+            document.getElementById('selling_price').focus();
+        }
+
+        // 초기화 및 ESC 키 처리
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                resetFields();
             }
         });
-
-        // 입력 필드 초기화 함수
-        function clearInputs() {
-            document.getElementById('competitor_price').value = ''; // 경쟁사 판매가 초기화
-            document.getElementById('local_price').value = ''; // 현지 구매가 초기화
-            document.getElementById('expected_price').textContent = '-'; // 결과 초기화
-            document.getElementById('profit').textContent = '-'; // 결과 초기화
-            document.getElementById('competitor_price').focus(); // 커서 이동
-        }
     </script>
 </head>
 <body>
-    <div class="container">
+    <!-- 첫 번째 계산기 -->
+    <div class="container" id="calculator1">
         <h1>구대 소싱 계산기</h1>
-        <form onsubmit="event.preventDefault(); calculate();">
+        <form onsubmit="event.preventDefault(); calculateSourcing();">
             <label for="competitor_price">경쟁사 판매가 (원):</label>
-            <input type="text" id="competitor_price" name="competitor_price" placeholder="숫자 입력" required>
+            <input type="text" id="competitor_price" placeholder="숫자 입력" required>
 
             <label for="local_price">현지 구매가 (위안):</label>
-            <input type="text" id="local_price" name="local_price" placeholder="숫자 입력" required>
+            <input type="text" id="local_price" placeholder="숫자 입력" required>
 
             <button type="submit">계산</button>
         </form>
 
         <div class="result">
             <p>예상판매가: <span id="expected_price">-</span></p>
-            <p>판매가 더하기: <span id="profit" style="color: red;">-</span></p>
+            <p>판매가 더하기: <span id="profit">-</span></p>
         </div>
+    </div>
+
+    <!-- 두 번째 계산기 -->
+    <div class="container" id="calculator2">
+        <h1>중구대 마진 계산기</h1>
+        <form>
+            <label for="exchange_rate">환율:</label>
+            <select id="exchange_rate">
+                <option value="170">170</option>
+                <option value="175">175</option>
+                <option value="180">180</option>
+                <option value="185">185</option>
+                <option value="190">190</option>
+                <option value="195">195</option>
+                <option value="200">200</option>
+                <option value="205">205</option>
+                <option value="210">210</option>
+                <option value="215">215</option>
+                <option value="220">220</option>
+                <option value="225">225</option>
+                <option value="230">230</option>
+            </select>
+
+            <label for="selling_price">판매가 (원):</label>
+            <input type="text" id="selling_price" placeholder="숫자 입력" required>
+
+            <label for="taobao_price">타오바오 가격:</label>
+            <input type="text" id="taobao_price" placeholder="숫자 입력" required>
+
+            <label for="weight">무게 (kg):</label>
+            <select id="weight" onchange="calculateProfit()">
+                <option value="">선택</option>
+                <!-- 명시적으로 무게 옵션 추가 -->
+                <option value="0.5">0.5 kg</option>
+                <option value="1.0">1.0 kg</option>
+                <option value="1.5">1.5 kg</option>
+                <option value="2.0">2.0 kg</option>
+                <option value="2.5">2.5 kg</option>
+                <option value="3.0">3.0 kg</option>
+                <option value="3.5">3.5 kg</option>
+                <option value="4.0">4.0 kg</option>
+                <option value="4.5">4.5 kg</option>
+                <option value="5.0">5.0 kg</option>
+                <option value="5.5">5.5 kg</option>
+                <option value="6.0">6.0 kg</option>
+                <option value="6.5">6.5 kg</option>
+                <option value="7.0">7.0 kg</option>
+                <option value="7.5">7.5 kg</option>
+                <option value="8.0">8.0 kg</option>
+                <option value="8.5">8.5 kg</option>
+                <option value="9.0">9.0 kg</option>
+                <option value="9.5">9.5 kg</option>
+                <option value="10.0">10.0 kg</option>
+                <option value="10.5">10.5 kg</option>
+                <option value="11.0">11.0 kg</option>
+                <option value="11.5">11.5 kg</option>
+                <option value="12.0">12.0 kg</option>
+                <option value="12.5">12.5 kg</option>
+                <option value="13.0">13.0 kg</option>
+                <option value="13.5">13.5 kg</option>
+                <option value="14.0">14.0 kg</option>
+                <option value="14.5">14.5 kg</option>
+                <option value="15.0">15.0 kg</option>
+                <option value="15.5">15.5 kg</option>
+                <option value="16.0">16.0 kg</option>
+                <option value="16.5">16.5 kg</option>
+                <option value="17.0">17.0 kg</option>
+                <option value="17.5">17.5 kg</option>
+                <option value="18.0">18.0 kg</option>
+                <option value="18.5">18.5 kg</option>
+                <option value="19.0">19.0 kg</option>
+                <option value="19.5">19.5 kg</option>
+                <option value="20.0">20.0 kg</option>
+                <option value="20.5">20.5 kg</option>
+                <option value="21.0">21.0 kg</option>
+                <option value="21.5">21.5 kg</option>
+                <option value="22.0">22.0 kg</option>
+                <option value="22.5">22.5 kg</option>
+                <option value="23.0">23.0 kg</option>
+                <option value="23.5">23.5 kg</option>
+                <option value="24.0">24.0 kg</option>
+                <option value="24.5">24.5 kg</option>
+                <option value="25.0">25.0 kg</option>
+                <option value="25.5">25.5 kg</option>
+                <option value="26.0">26.0 kg</option>
+                <option value="26.5">26.5 kg</option>
+                <option value="27.0">27.0 kg</option>
+                <option value="27.5">27.5 kg</option>
+                <option value="28.0">28.0 kg</option>
+                <option value="28.5">28.5 kg</option>
+                <option value="29.0">29.0 kg</option>
+                <option value="29.5">29.5 kg</option>
+                <option value="30.0">30.0 kg</option>
+            </select>
+        </form>
+
+        <div class="result">
+            <p>예상 순익: <span id="profit_second">-</span></p>
+        </div>
+        <button onclick="resetFields()">Reset</button>
     </div>
 </body>
 </html>
