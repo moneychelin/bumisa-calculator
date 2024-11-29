@@ -9,43 +9,48 @@
             font-family: 'Malgun Gothic', sans-serif;
             text-align: center;
             padding: 20px;
+            margin: 0;
         }
         .container {
-            max-width: 500px;
+            max-width: 400px; /* 컨테이너의 최대 너비를 설정 */
             margin: 0 auto;
             padding: 20px;
             border: 1px solid #ddd;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        input {
-            width: 100%;
+        input, button {
+            width: 100%; /* 버튼과 입력 필드 너비를 컨테이너 안으로 제한 */
             padding: 10px;
             margin: 10px 0;
             font-size: 16px;
+            box-sizing: border-box;
         }
         button {
-            width: 100%;
-            padding: 10px;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 5px;
             font-size: 18px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
         }
         .result {
             margin: 20px 0;
             font-size: 20px;
             font-weight: bold;
         }
+        .result span {
+            color: red;
+        }
     </style>
     <script>
-        // 숫자를 천 단위 콤마로 포맷하는 함수
         function formatNumber(num) {
             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
 
-        // 500 단위 올림 함수
         function roundUpToNearest500(num) {
             return Math.ceil(num / 500) * 500;
         }
@@ -59,34 +64,27 @@
                 return;
             }
 
-            // 예상 판매가 계산: 현지 구매가 * 192 + 현지 구매가 * 192 * 0.05
             let expectedPrice = localPrice * 192 + localPrice * 192 * 0.05;
-
-            // 예상 판매가를 500 단위로 올림
             expectedPrice = roundUpToNearest500(expectedPrice);
 
-            // 판매가 더하기: 경쟁사 판매가 - 예상 판매가
-            const profit = Math.floor(competitorPrice - expectedPrice); // 소수점 제거
+            const profit = Math.floor(competitorPrice - expectedPrice);
 
-            // 결과 출력 (천 단위 콤마 추가)
             document.getElementById('expected_price').textContent = `${formatNumber(expectedPrice)} 원`;
             document.getElementById('profit').textContent = `${formatNumber(profit)} 원`;
         }
 
-        // ESC 키 이벤트 처리
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 clearInputs();
             }
         });
 
-        // 입력 필드 초기화 함수
         function clearInputs() {
-            document.getElementById('competitor_price').value = ''; // 경쟁사 판매가 초기화
-            document.getElementById('local_price').value = ''; // 현지 구매가 초기화
-            document.getElementById('expected_price').textContent = '-'; // 결과 초기화
-            document.getElementById('profit').textContent = '-'; // 결과 초기화
-            document.getElementById('competitor_price').focus(); // 커서 이동
+            document.getElementById('competitor_price').value = '';
+            document.getElementById('local_price').value = '';
+            document.getElementById('expected_price').textContent = '-';
+            document.getElementById('profit').textContent = '-';
+            document.getElementById('competitor_price').focus();
         }
     </script>
 </head>
@@ -105,7 +103,7 @@
 
         <div class="result">
             <p>예상판매가: <span id="expected_price">-</span></p>
-            <p>판매가 더하기: <span id="profit" style="color: red;">-</span></p>
+            <p>판매가 더하기: <span id="profit">-</span></p>
         </div>
     </div>
 </body>
